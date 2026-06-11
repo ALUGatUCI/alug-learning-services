@@ -1,0 +1,76 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Los_Angeles
+
+RUN apt-get update && apt-get install -y \
+    systemd \
+    systemd-sysv \
+    dbus \
+    bash \
+    vim \
+    nano \
+    less \
+    tree \
+    ncurses-bin \
+    coreutils \
+    util-linux \
+    procps \
+    psmisc \
+    iproute2 \
+    iputils-ping \
+    net-tools \
+    curl \
+    wget \
+    dnsutils \
+    file \
+    findutils \
+    diffutils \
+    tar \
+    gzip \
+    zip \
+    unzip \
+    rsync \
+    git \
+    make \
+    gcc \
+    g++ \
+    python3 \
+    python3-pip \
+    htop \
+    lsof \
+    strace \
+    openssh-server \
+    sudo \
+    ca-certificates \
+    tzdata \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH on port 22 (host port managed externally by Go)
+RUN mkdir -p /var/run/sshd \
+    && ssh-keygen -A \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's/UsePAM yes/UsePAM no/' /etc/ssh/sshd_config
+
+# Default fallback credentials if Go doesn't pass env vars
+RUN echo 'root:root' | chpasswd
+
+# Entrypoint to create student user from env vars at runtime
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+RUN systemctl enable ssh
+
+RUN systemctl mask \
+    getty@tty1.service \
+    getty@tty2.service \
+    systemd-logind.service \
+    systemd-resolved.service \
+    apt-daily.service \
+    apt-daily-upgrade.service
+
+EXPOSE 22
+
+CMD ["/entrypoint.sh"]
