@@ -35,6 +35,7 @@ func GetPlatformSocket() (*string, error) {
 }
 
 type Connection struct {
+	provisionCount int
 	client *context.Context
 }
 
@@ -48,7 +49,7 @@ func NewPodman() (*Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Connection{client: &client}, nil
+	return &Connection{provisionCount: 0, client: &client}, nil
 }
 
 func (client *Connection) Inspect(container string) (*define.InspectContainerData, error) {
@@ -63,14 +64,6 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 	return inspectData, nil
 }
 
-func (client *Connection) PullImage(image string) (error) {
-	_, err := images.Pull(*client.client, image, nil)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (client *Connection) CreateContainer(image string, name string) (error) {
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
@@ -78,6 +71,8 @@ func (client *Connection) CreateContainer(image string, name string) (error) {
 	if err != nil {
 		return err
 	}
+
+	client.provisionCount++
 	return nil
 }
 func (client *Connection) StartContainer(name string) (error) {
