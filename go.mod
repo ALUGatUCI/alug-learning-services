@@ -2,7 +2,10 @@ module alugatuci/learningservers
 
 go 1.26.3
 
-require go.podman.io/podman/v6 v6.0.0-20260605172344-138879058b84
+require (
+	github.com/joho/godotenv v1.5.1
+	go.podman.io/podman/v6 v6.0.0-20260605172344-138879058b84
+)
 
 require (
 	cyphar.com/go-pathrs v0.2.4 // indirect
