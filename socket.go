@@ -34,6 +34,8 @@ func RunSocket(podman *Connection) error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/inspect/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		name := strings.TrimPrefix(r.URL.Path, "/inspect/")
 		if name == "" {
 			http.Error(w, "missing container name", http.StatusBadRequest)
@@ -46,8 +48,33 @@ func RunSocket(podman *Connection) error {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(data)
+	})
+
+	mux.HandleFunc("/provision/", func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/provision/")
+		if name == "" {
+			http.Error(w, "missing container name", http.StatusBadRequest)
+			return
+		}
+
+		imagePath := os.Getenv("IMAGE_PATH")
+		if imagePath == "" {
+			http.Error(w, "IMAGE_PATH is not set", http.StatusInternalServerError)
+			return
+		}
+
+		if err := podman.CreateContainer(imagePath, name); err != nil {
+			http.Error(w, "failed to create container: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "created",
+			"name":   name,
+		})
 	})
 
 	return http.Serve(*listener, mux)
