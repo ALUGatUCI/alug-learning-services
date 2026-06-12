@@ -57,9 +57,9 @@ func RunSocket(podman *Connection) error {
 			return
 		}
 
-		imagePath := os.Getenv("IMAGE_PATH")
+		imagePath := os.Getenv("IMAGE")
 		if imagePath == "" {
-			http.Error(w, "IMAGE_PATH is not set", http.StatusInternalServerError)
+			http.Error(w, "IMAGE is not set", http.StatusInternalServerError)
 			return
 		}
 
