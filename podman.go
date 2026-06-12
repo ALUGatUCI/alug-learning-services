@@ -37,7 +37,7 @@ func GetPlatformSocket() (*string, error) {
 
 type Connection struct {
 	provisionCount int
-	client         *context.Context
+	client *context.Context
 }
 
 func NewPodman() (*Connection, error) {
