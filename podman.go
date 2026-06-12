@@ -65,8 +65,15 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 }
 
 func (client *Connection) CreateContainer(image string, name string) error {
+	// Generate the spec for the container
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
+	spec.Systemd = "always"
+	// `spec.Privileged` is a pointer to a boolean, so we need it to
+	// be assigned as such *sigh*
+	privileged := true
+	spec.Privileged = &privileged
+
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
 		return err
