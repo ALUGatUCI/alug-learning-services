@@ -72,9 +72,10 @@ func (client *Connection) CreateContainer(image string, name string, ip string) 
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
 	spec.Systemd = "always"
-	// `spec.Privileged` is a pointer to a boolean, so we need it to
+	// Boolean members require a pointer to a boolean, so we need it to
 	// be assigned as such *sigh*
 	privileged := true
+	spec.Remove = &privileged
 	spec.Privileged = &privileged
 	// Assign the Macvlan network so each CreateContainer
 	// can be assigned their own unique IP (and thereby make
