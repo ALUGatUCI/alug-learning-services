@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"net"
 	"os/user"
 	"runtime"
 
+	nettypes "go.podman.io/common/libnetwork/types"
 	"go.podman.io/podman/v6/libpod/define"
 	"go.podman.io/podman/v6/pkg/bindings"
 	"go.podman.io/podman/v6/pkg/bindings/containers"
@@ -64,7 +67,7 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 	return inspectData, nil
 }
 
-func (client *Connection) CreateContainer(image string, name string) error {
+func (client *Connection) CreateContainer(image string, name string, ip string) error {
 	// Generate the spec for the container
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
@@ -73,6 +76,15 @@ func (client *Connection) CreateContainer(image string, name string) error {
 	// be assigned as such *sigh*
 	privileged := true
 	spec.Privileged = &privileged
+	// Assign the Macvlan network so each CreateContainer
+	// can be assigned their own unique IP (and thereby make
+	// life less difficult)
+	network := os.Getenv("MACVLAN_NETWORK")
+	spec.Networks = map[string]nettypes.PerNetworkOptions {
+		network: {
+			StaticIPs: []net.IP{net.ParseIP(ip)},
+		},
+	}
 
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
