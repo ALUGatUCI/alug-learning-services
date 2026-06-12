@@ -1,16 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"context"
 	"errors"
+	"fmt"
 	"os/user"
 	"runtime"
 
 	"go.podman.io/podman/v6/libpod/define"
 	"go.podman.io/podman/v6/pkg/bindings"
 	"go.podman.io/podman/v6/pkg/bindings/containers"
-	"go.podman.io/podman/v6/pkg/bindings/images"
 	"go.podman.io/podman/v6/pkg/specgen"
 )
 
@@ -27,16 +26,18 @@ func GetPlatformSocket() (*string, error) {
 		socketDir := fmt.Sprintf("unix://%s/.local/share/containers/podman/machine/podman.sock", user.HomeDir)
 		return &socketDir, nil
 	} else {
-		// This would apply for Linux and this is the only case we would cover if
-		// not Windows or Darwin
-		socketDir := "unix:///run/podman/podman.sock"
+		user, err := user.Current()
+		if err != nil {
+			return nil, errors.New("Failed to get the current user")
+		}
+		socketDir := fmt.Sprintf("unix:///run/user/%s/podman/podman.sock", user.Uid)
 		return &socketDir, nil
 	}
 }
 
 type Connection struct {
 	provisionCount int
-	client *context.Context
+	client         *context.Context
 }
 
 func NewPodman() (*Connection, error) {
@@ -64,7 +65,7 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 	return inspectData, nil
 }
 
-func (client *Connection) CreateContainer(image string, name string) (error) {
+func (client *Connection) CreateContainer(image string, name string) error {
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
@@ -75,21 +76,21 @@ func (client *Connection) CreateContainer(image string, name string) (error) {
 	client.provisionCount++
 	return nil
 }
-func (client *Connection) StartContainer(name string) (error) {
+func (client *Connection) StartContainer(name string) error {
 	if err := containers.Start(*client.client, name, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (client *Connection) StopContainer(name string) (error) {
+func (client *Connection) StopContainer(name string) error {
 	if err := containers.Stop(*client.client, name, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (client *Connection) DeleteContainer(name string) (error) {
+func (client *Connection) DeleteContainer(name string) error {
 	if _, err := containers.Remove(*client.client, name, nil); err != nil {
 		return err
 	}
