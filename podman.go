@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os/user"
 	"runtime"
@@ -21,14 +20,14 @@ func GetPlatformSocket() (*string, error) {
 	} else if platform == "darwin" {
 		user, err := user.Current()
 		if err != nil {
-			return nil, errors.New("Failed to get the current user")
+			return nil, fmt.Errorf("Failed to get the current user: %w", err)
 		}
 		socketDir := fmt.Sprintf("unix://%s/.local/share/containers/podman/machine/podman.sock", user.HomeDir)
 		return &socketDir, nil
 	} else {
 		user, err := user.Current()
 		if err != nil {
-			return nil, errors.New("Failed to get the current user")
+			return nil, fmt.Errorf("Failed to get the current user: %w", err)
 		}
 		socketDir := fmt.Sprintf("unix:///run/user/%s/podman/podman.sock", user.Uid)
 		return &socketDir, nil
@@ -43,7 +42,7 @@ type Connection struct {
 func NewPodman() (*Connection, error) {
 	platformSocket, err := GetPlatformSocket()
 	if err != nil {
-		return nil, errors.New("Failed to get socket")
+		return nil, fmt.Errorf("Failed to get socket: %w", err)
 	}
 
 	client, err := bindings.NewConnection(context.Background(), *platformSocket)

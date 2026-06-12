@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"errors"
 )
 
 func CreateSocket() (*net.Listener, error) {
@@ -18,7 +17,7 @@ func CreateSocket() (*net.Listener, error) {
 
 	listener, err := net.Listen("unix", socketPath)
 	if err != nil {
-		return nil, errors.New("Cannot get a Socket path")
+		return nil, fmt.Errorf("Cannot get a Socket path: %w", err)
 	}
 
 	return &listener, nil
@@ -27,7 +26,7 @@ func CreateSocket() (*net.Listener, error) {
 func RunSocket(podman *Connection) error {
 	listener, err := CreateSocket()
 	if err != nil {
-		return errors.New(fmt.Sprintf("Failed to create socket: %s", err))
+		return fmt.Errorf("Failed to create socket: %w", err)
 	}
 	defer (*listener).Close()
 
