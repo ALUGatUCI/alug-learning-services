@@ -129,13 +129,6 @@ func (client *Connection) StopContainer(name string) error {
 	if err := containers.Stop(*client.client, name, nil); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (client *Connection) DeleteContainer(name string) error {
-	if _, err := containers.Remove(*client.client, name, nil); err != nil {
-		return err
-	}
 
 	client.provisionCount--
 	return nil
