@@ -69,7 +69,7 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 	return inspectData, nil
 }
 
-func (client *Connection) CreateContainer(image string, name string, ip string) error {
+func (client *Connection) CreateContainer(image string, name string) error {
 	// Generate the spec for the container
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
