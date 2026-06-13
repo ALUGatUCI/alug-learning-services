@@ -70,7 +70,12 @@ func (client *Connection) Inspect(container string) (*define.InspectContainerDat
 	return inspectData, nil
 }
 
-func (client *Connection) CreateContainer(image string, name string) error {
+type ContainerInfo struct {
+	name string
+	sshPort uint16
+}
+
+func (client *Connection) CreateContainer(image string, name string) (*ContainerInfo, error) {
 	// Generate the spec for the container
 	spec := specgen.NewSpecGenerator(image, false)
 	spec.Name = name
@@ -81,9 +86,10 @@ func (client *Connection) CreateContainer(image string, name string) error {
 	spec.Remove = &privileged
 	spec.Privileged = &privileged
 	// Assign an SSH port
+	sshPort := client.CalculateSSHPort()
 	spec.PortMappings = []nettypes.PortMapping{
 		{
-			HostPort: client.CalculateSSHPort(),
+			HostPort: sshPort,
 			ContainerPort: 22,
 		},
 	}
@@ -109,14 +115,14 @@ func (client *Connection) CreateContainer(image string, name string) error {
 
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client.provisionCount++
 
 	client.StartContainer(name)
 
-	return nil
+	return &ContainerInfo{ name: name, sshPort: sshPort }, nil
 }
 func (client *Connection) StartContainer(name string) error {
 	if err := containers.Start(*client.client, name, nil); err != nil {
