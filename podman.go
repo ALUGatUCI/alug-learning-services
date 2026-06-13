@@ -6,6 +6,7 @@ import (
 	"os/user"
 	"runtime"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
 	nettypes "go.podman.io/common/libnetwork/types"
 	"go.podman.io/podman/v6/libpod/define"
 	"go.podman.io/podman/v6/pkg/bindings"
@@ -86,6 +87,23 @@ func (client *Connection) CreateContainer(image string, name string) error {
 			ContainerPort: 22,
 		},
 	}
+	// Assign Resource Limits
+	memLimit := int64(1024 * 1024 * 1024) // 1 GiB
+	cpuQuota := int64(100000)
+	cpuPeriod := uint64(100000)
+
+	spec.ResourceLimits = &specs.LinuxResources{
+		Memory: &specs.LinuxMemory{
+			Limit: &memLimit,
+		},
+		CPU: &specs.LinuxCPU{
+			Quota: &cpuQuota,
+			Period: &cpuPeriod,
+		},
+		Pids: &LinuxPids{
+			Limit: 512,
+		},
+	}
 
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
@@ -93,6 +111,9 @@ func (client *Connection) CreateContainer(image string, name string) error {
 	}
 
 	client.provisionCount++
+
+	client.StartContainer(name)
+
 	return nil
 }
 func (client *Connection) StartContainer(name string) error {
