@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -63,7 +64,8 @@ func RunSocket(podman *Connection) error {
 			return
 		}
 
-		if err := podman.CreateContainer(imagePath, name); err != nil {
+		container, err := podman.CreateContainer(imagePath, name);
+		if err != nil {
 			http.Error(w, "failed to create container: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -72,7 +74,8 @@ func RunSocket(podman *Connection) error {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{
 			"status": "created",
-			"name":   name,
+			"name":   container.name,
+			"sshPort": strconv.Itoa(int(container.sshPort)),
 		})
 	})
 
