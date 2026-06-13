@@ -55,6 +55,10 @@ func NewPodman() (*Connection, error) {
 	return &Connection{provisionCount: 0, client: &client}, nil
 }
 
+func (client *Connection) CalculateSSHPort() uint16 {
+	return uint16(10000 + client.provisionCount)
+}
+
 func (client *Connection) Inspect(container string) (*define.InspectContainerData, error) {
 	inspectData, err := containers.Inspect(
 		*client.client,
@@ -77,6 +81,13 @@ func (client *Connection) CreateContainer(image string, name string, ip string) 
 	privileged := true
 	spec.Remove = &privileged
 	spec.Privileged = &privileged
+	// Assign an SSH port
+	spec.PortMappings = []nettypes.PortMapping{
+		{
+			HostPort: client.CalculateSSHPort(),
+			ContainerPort: 22,
+		},
+	}
 
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
