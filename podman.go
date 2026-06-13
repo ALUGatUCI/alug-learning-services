@@ -93,6 +93,7 @@ func (client *Connection) CreateContainer(image string, name string) error {
 	cpuPeriod := uint64(100000)
 	pidLimit := int64(512)
 
+	// Set the resource limits
 	spec.ResourceLimits = &specs.LinuxResources{
 		Memory: &specs.LinuxMemory{
 			Limit: &memLimit,
