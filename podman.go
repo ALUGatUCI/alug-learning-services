@@ -77,23 +77,6 @@ func (client *Connection) CreateContainer(image string, name string, ip string) 
 	privileged := true
 	spec.Remove = &privileged
 	spec.Privileged = &privileged
-	// Assign the Macvlan network so each CreateContainer
-	// can be assigned their own unique IP (and thereby make
-	// life less difficult)
-	network := os.Getenv("MACVLAN_NETWORK")
-	if network == "" {
-		return fmt.Errorf("An error occurred getting the Macvlan network")
-	}
-
-	parsedIP := net.ParseIP(ip)
-	if parsedIP == nil {
-		return fmt.Errorf("An error occurred parsing the IP address: %s", ip)
-	}
-	spec.Networks = map[string]nettypes.PerNetworkOptions {
-		network: {
-			StaticIPs: []net.IP{net.ParseIP(ip)},
-		},
-	}
 
 	_, err := containers.CreateWithSpec(*client.client, spec, nil)
 	if err != nil {
