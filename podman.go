@@ -91,6 +91,7 @@ func (client *Connection) CreateContainer(image string, name string) error {
 	memLimit := int64(1024 * 1024 * 1024) // 1 GiB
 	cpuQuota := int64(100000)
 	cpuPeriod := uint64(100000)
+	pidLimit := int64(512)
 
 	spec.ResourceLimits = &specs.LinuxResources{
 		Memory: &specs.LinuxMemory{
@@ -100,8 +101,8 @@ func (client *Connection) CreateContainer(image string, name string) error {
 			Quota: &cpuQuota,
 			Period: &cpuPeriod,
 		},
-		Pids: &LinuxPids{
-			Limit: 512,
+		Pids: &specs.LinuxPids{
+			Limit: &pidLimit,
 		},
 	}
 
